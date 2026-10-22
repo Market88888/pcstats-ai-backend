@@ -1,2 +1,20 @@
-# pcstats-ai-backend
-PCStats AI backend for MoonLoader. API keys stay on the server; the script only talks to this service.
+# PCStats AI — бэкенд
+
+Скрипт ходит только на этот сервер. API-ключи ИИ хранятся здесь и вводятся в админке.
+
+## Запуск на Render
+1. Этот репозиторий → Render → New → Web Service (Node, `npm install`, `npm start`).
+2. Environment:
+   - `ADMIN_PASSWORD` — пароль админки
+   - `CLIENT_KEY` — длинный случайный ключ (его же впишешь в скрипт)
+   - (рекомендую) `UPSTASH_REDIS_REST_URL` и `UPSTASH_REDIS_REST_TOKEN` — иначе на Render Free ключи и счётчики пропадут при перезапуске
+3. Открой `https://ТВОЙ-СЕРВИС.onrender.com/admin`, войди паролем, нажми «+ Добавить» в «API-ключи ИИ», вставь ключ и нажми «Проверить».
+4. В игре: Настройки → ИИ-чат → вставь адрес сервиса и `CLIENT_KEY` → «Проверить».
+
+## Лимиты
+В админке: «Лимит сообщений в сутки» (по умолчанию 50, `-1` = без лимита), часовой пояс сброса,
+индивидуальный лимит и бан для каждого игрока. Сообщение списывается только если ИИ ответил.
+
+## Провайдеры
+`openai` (OpenAI, а также Groq / OpenRouter / DeepSeek через Base URL), `anthropic`, `gemini`.
+Активный отвечает первым, остальные включённые — запасные.

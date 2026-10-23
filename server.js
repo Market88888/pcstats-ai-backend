@@ -48,12 +48,28 @@ async function loadState() {
     console.log('[state] loaded:', state.providers.length, 'providers');
   } catch (e) { console.error('[state] load failed:', e.message); }
   bootstrapFromEnv();
+  migrateGeminiModels();
+}
+/** Rename deprecated Gemini models after load. */
+function migrateGeminiModels() {
+  const map = {
+    'gemini-2.0-flash': 'gemini-3.8-flash',
+    'gemini-2.0-flash-001': 'gemini-3.8-flash',
+    'gemini-1.5-flash': 'gemini-3.8-flash',
+    'gemini-1.5-pro': 'gemini-3.8-flash',
+    'gemini-pro': 'gemini-3.8-flash',
+  };
+  for (const p of state.providers) {
+    if (p.type !== 'gemini') continue;
+    const m = p.model || '';
+    if (map[m]) { p.model = map[m]; touch(); console.log('[migrate] gemini model', m, '→', p.model); }
+  }
 }
 function bootstrapFromEnv() {
   const pairs = [
     { env: 'GROQ_API_KEY', name: 'Groq', type: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile' },
     { env: 'OPENAI_API_KEY', name: 'OpenAI', type: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
-    { env: 'GEMINI_API_KEY', name: 'Gemini', type: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-2.0-flash' },
+    { env: 'GEMINI_API_KEY', name: 'Gemini', type: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-3.8-flash' },
   ];
   for (const spec of pairs) {
     const key = (process.env[spec.env] || '').trim();
@@ -70,7 +86,7 @@ function detectKey(apiKey) {
   if (!k || k.length < 10) return null;
   if (k.startsWith('gsk_')) return { name: 'Groq', type: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', apiKey: k };
   if (k.startsWith('sk-') || k.startsWith('sk-proj-')) return { name: 'OpenAI', type: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', apiKey: k };
-  if (k.startsWith('AIza') || k.startsWith('AQ.')) return { name: 'Gemini', type: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-2.0-flash', apiKey: k };
+  if (k.startsWith('AIza') || k.startsWith('AQ.')) return { name: 'Gemini', type: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-3.8-flash', apiKey: k };
   return { name: 'Custom', type: 'openai', baseUrl: 'https://api.groq.com/openai/v1', model: 'llama-3.3-70b-versatile', apiKey: k };
 }
 function upsertProvider(cfg) {
@@ -123,7 +139,7 @@ function ipLimited(ip, max = 40, windowMs = 60000) {
 const TYPES = {
   openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
   anthropic: { baseUrl: 'https://api.anthropic.com', model: 'claude-haiku-5-5' },
-  gemini: { baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-2.0-flash' },
+  gemini: { baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-3.8-flash' },
 };
 
 async function timedFetch(url, opts, ms = 45000) {

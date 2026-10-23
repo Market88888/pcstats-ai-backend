@@ -1,9 +1,8 @@
 'use strict';
 /*
  * PCStats AI backend.
- * Script (MoonLoader) sends ONLY GET requests here.
- * AI API keys are stored here and entered in /admin.
- * /api/* always returns HTTP 200 so the native downloader gets the body.
+ * Script sends ONLY GET. API keys live here only.
+ * Simple mode: paste key in /admin OR set GROQ_API_KEY / OPENAI_API_KEY in Render env.
  */
 const express = require('express');
 const fs = require('fs');
@@ -75,6 +74,94 @@ async function loadState() {
   } catch (e) {
     console.error('[state] load failed:', e.message);
   }
+  bootstrapFromEnv();
+}
+
+/** Auto-create providers from Render Environment variables — no admin needed. */
+function bootstrapFromEnv() {
+  const pairs = [
+    {
+      env: 'GROQ_API_KEY',
+      name: 'Groq',
+      type: 'openai',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.3-70b-versatile',
+    },
+    {
+      env: 'OPENAI_API_KEY',
+      name: 'OpenAI',
+      type: 'openai',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini',
+    },
+  ];
+  for (const spec of pairs) {
+    const key = (process.env[spec.env] || '').trim();
+    if (!key) continue;
+    let p = state.providers.find((x) => x.name === spec.name && x.type === 'openai');
+    if (!p) {
+      p = { id: crypto.randomBytes(5).toString('hex'), apiKey: '' };
+      state.providers.push(p);
+    }
+    p.name = spec.name;
+    p.type = spec.type;
+    p.baseUrl = spec.baseUrl;
+    p.model = spec.model;
+    p.enabled = true;
+    p.apiKey = key;
+    if (!S().activeProvider) S().activeProvider = p.id;
+    touch();
+    console.log('[env] provider from', spec.env, '→', spec.name);
+  }
+}
+
+/** Detect provider from key prefix. Returns config or null. */
+function detectKey(apiKey) {
+  const k = String(apiKey || '').trim();
+  if (!k || k.length < 10) return null;
+  if (k.startsWith('gsk_')) {
+    return {
+      name: 'Groq',
+      type: 'openai',
+      baseUrl: 'https://api.groq.com/openai/v1',
+      model: 'llama-3.3-70b-versatile',
+      apiKey: k,
+    };
+  }
+  if (k.startsWith('sk-') || k.startsWith('sk-proj-')) {
+    return {
+      name: 'OpenAI',
+      type: 'openai',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-4o-mini',
+      apiKey: k,
+    };
+  }
+  // unknown prefix — assume Groq-compatible openai endpoint if user chooses, default Groq
+  return {
+    name: 'Custom',
+    type: 'openai',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    model: 'llama-3.3-70b-versatile',
+    apiKey: k,
+  };
+}
+
+function upsertProvider(cfg) {
+  let p = state.providers.find((x) => x.name === cfg.name);
+  if (!p) {
+    p = { id: crypto.randomBytes(5).toString('hex'), apiKey: '' };
+    state.providers.push(p);
+  }
+  p.name = cfg.name;
+  p.type = cfg.type;
+  p.baseUrl = cfg.baseUrl;
+  p.model = cfg.model;
+  p.enabled = true;
+  p.apiKey = cfg.apiKey;
+  S().activeProvider = p.id;
+  touch();
+  return p;
 }
 
 let saving = false;
@@ -300,6 +387,20 @@ app.post('/admin/api/settings', adminAuth, (req, res) => {
   if ('systemPrompt' in b) s.systemPrompt = String(b.systemPrompt).slice(0, 4000);
   if ('activeProvider' in b) s.activeProvider = String(b.activeProvider);
   touch(); res.json({ ok: true });
+});
+
+/** SIMPLE: only API key — auto detect Groq (gsk_) or OpenAI (sk-) */
+app.post('/admin/api/quick-key', adminAuth, async (req, res) => {
+  const cfg = detectKey(req.body && req.body.apiKey);
+  if (!cfg) return res.status(400).json({ ok: false, error: 'Вставь API-ключ (gsk_… для Groq или sk-… для OpenAI)' });
+  const p = upsertProvider(cfg);
+  try {
+    const t0 = Date.now();
+    const text = await callProvider(p, 'Answer with one word.', [{ role: 'user', content: 'Say: works' }]);
+    res.json({ ok: true, name: p.name, model: p.model, ms: Date.now() - t0, text: String(text).slice(0, 80) });
+  } catch (e) {
+    res.json({ ok: false, error: String(e.message).slice(0, 200), name: p.name, model: p.model });
+  }
 });
 
 app.post('/admin/api/provider', adminAuth, (req, res) => {

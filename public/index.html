@@ -3,61 +3,129 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PCStats AI</title>
+<title>PCStats AI — админка</title>
 <style>
-:root{--bg:#0b0d12;--card:#12151d;--line:#252b3a;--tx:#e8ebf4;--dim:#8d96ad;--acc:#8b6cff;--ok:#3ddc84;--bad:#ff5c6c}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,sans-serif}
-.wrap{max-width:640px;margin:0 auto;padding:28px 16px 80px}
-h1{font-size:22px;margin:0 0 4px}.hint{color:var(--dim);font-size:13px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
-label{display:block;color:var(--dim);font-size:12px;margin:0 0 6px}
-input{width:100%;background:#0e111a;border:1px solid var(--line);border-radius:10px;color:var(--tx);padding:12px 14px;font:inherit}
-input:focus{outline:none;border-color:var(--acc)}
-button{border:0;border-radius:10px;padding:12px 18px;font:inherit;font-weight:600;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--acc),#6a8cff);width:100%;margin-top:12px}
-button:disabled{opacity:.5}button.sec{background:#222839;margin-top:8px}
-.status{margin-top:12px;padding:10px 12px;border-radius:10px;font-size:13px;display:none}
-.status.ok{display:block;background:#1a3d2e;color:var(--ok)}.status.err{display:block;background:#3a1d26;color:var(--bad)}
-.pill{display:inline-block;padding:4px 10px;border-radius:99px;background:#1e2333;font-size:12px;margin:4px 4px 0 0}
-.pill.ok{color:var(--ok)}.logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--acc),#4fb4ff);display:grid;place-items:center;font-weight:800;margin-bottom:12px}
+:root{--bg:#0b0d12;--card:#12151d;--card2:#171b26;--line:#252b3a;--tx:#e8ebf4;--dim:#8d96ad;--acc:#8b6cff;--acc2:#4fb4ff;--ok:#3ddc84;--warn:#ffb020;--bad:#ff5c6c}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,#1b1740 0,transparent 60%),var(--bg);color:var(--tx);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:22px 16px 80px}
+h1{font-size:22px;margin:0}h2{font-size:15px;margin:0 0 12px}
+.top{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;font-weight:800}
+.pill{padding:3px 10px;border-radius:99px;background:#1e2333;color:var(--dim);font-size:12px}
+.pill.ok{color:var(--ok);border:1px solid #3ddc8444}.pill.bad{color:var(--bad);border:1px solid #ff5c6c44}.pill.act{color:#b9a8ff;border:1px solid #8b6cff55}
+.card{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+.grid{display:grid;gap:12px}.g2{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+label{display:block;color:var(--dim);font-size:12px;margin:0 0 4px}
+input,select,textarea{width:100%;background:#0e111a;border:1px solid var(--line);border-radius:10px;color:var(--tx);padding:9px 11px;font:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px #8b6cff22}
+textarea{min-height:110px;resize:vertical}
+button{border:0;border-radius:10px;padding:9px 14px;font:inherit;font-weight:600;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--acc),#6a8cff)}
+button:hover{filter:brightness(1.1)}button.sec{background:#222839;color:var(--tx)}button.bad{background:#3a1d26;color:#ff9aa6}button.sm{padding:5px 10px;font-size:12px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sp{flex:1}
+.prov{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:#0e111a}
+.prov.active{border-color:var(--acc);box-shadow:0 0 0 1px #8b6cff55 inset}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--dim);display:inline-block}.dot.on{background:var(--ok)}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--dim)}
+.bar{height:6px;background:#1e2333;border-radius:9px;overflow:hidden;min-width:70px}.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),var(--acc2))}
+.toast{position:fixed;right:16px;bottom:16px;background:#1b2030;border:1px solid var(--line);padding:12px 16px;border-radius:12px;opacity:0;transform:translateY(8px);transition:.25s;max-width:360px;z-index:99}
+.toast.show{opacity:1;transform:none}.toast.ok{border-color:#3ddc8466}.toast.err{border-color:#ff5c6c66}
+#login{max-width:340px;margin:18vh auto}.hint{color:var(--dim);font-size:12px;margin-top:6px}.sw{display:flex;align-items:center;gap:10px}
+.keybox{display:flex;gap:8px;align-items:center}.keybox input{flex:1}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.presets button{font-size:12px;padding:6px 10px}
+.status-line{font-size:12px;color:var(--dim);margin-top:8px}
+.status-line.ok{color:var(--ok)}.status-line.err{color:var(--bad)}
+.mask{font-family:ui-monospace,monospace;color:var(--ok);font-size:13px}
+.quick{border:1px solid #8b6cff55;background:#16122a}
 </style>
 </head>
 <body>
 <div class="wrap" id="login">
   <div class="card">
-    <div class="logo">AI</div>
-    <h1>PCStats AI</h1>
-    <p class="hint">Вход в админку</p>
-    <label>Пароль</label>
-    <input id="pw" type="password" placeholder="ADMIN_PASSWORD">
-    <button id="enter">Войти</button>
+    <div class="top"><div class="logo">AI</div><div><h1>PCStats AI</h1><div class="hint">Вход в админку</div></div></div>
+    <label>Пароль администратора</label>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="ADMIN_PASSWORD">
+    <div class="row" style="margin-top:12px"><button id="enter" style="width:100%">Войти</button></div>
   </div>
 </div>
-
 <div class="wrap" id="app" style="display:none">
-  <div class="logo">AI</div>
-  <h1>Ключ ИИ</h1>
-  <p class="hint" style="margin-bottom:16px">Вставь только API-ключ. Тип и модель определятся сами.<br>
-  Groq: ключ <b>gsk_…</b> · OpenAI: ключ <b>sk-…</b></p>
+  <div class="top">
+    <div class="logo">AI</div>
+    <div><h1>PCStats AI — управление</h1><div class="hint" id="meta"></div></div>
+    <div class="sp"></div>
+    <button class="sec sm" id="logout">Выйти</button>
+  </div>
 
-  <div class="card">
-    <label>API-ключ</label>
-    <input id="key" type="password" placeholder="gsk_… или sk-…" autocomplete="off">
-    <button id="save">Сохранить и проверить</button>
-    <button class="sec" id="show">Показать / скрыть ключ</button>
-    <div class="status" id="st"></div>
-    <div id="info" style="margin-top:12px"></div>
+  <div class="card quick">
+    <h2>Быстро: только API-ключ</h2>
+    <div class="hint" style="margin-bottom:10px">Вставь ключ Groq (<b>gsk_…</b>) или OpenAI (<b>sk-…</b>) — тип и модель подставятся сами.</div>
+    <div class="keybox">
+      <input id="quickKey" type="password" placeholder="gsk_… или sk-…" autocomplete="off">
+      <button class="sm" id="quickSave">Сохранить и проверить</button>
+    </div>
+    <div class="status-line" id="quickSt"></div>
   </div>
 
   <div class="card">
-    <p class="hint" id="meta"></p>
-    <button class="sec" id="logout">Выйти</button>
+    <h2>Общие настройки и лимиты</h2>
+    <div class="grid g2">
+      <div><label>Лимит сообщений в сутки (-1 = без лимита)</label><input id="defaultLimit" type="number"></div>
+      <div><label>Часовой пояс сброса (UTC+)</label><input id="tzOffsetHours" type="number" step="0.5"></div>
+      <div><label>Макс. длина сообщения</label><input id="maxInputChars" type="number"></div>
+      <div><label>Макс. токенов ответа</label><input id="maxOutputTokens" type="number"></div>
+      <div><label>Память диалога</label><input id="historyMessages" type="number"></div>
+      <div><label>Креативность (0–1)</label><input id="temperature" type="number" step="0.1" min="0" max="1"></div>
+    </div>
+    <div class="sw" style="margin-top:12px"><input id="enabled" type="checkbox" style="width:auto"><span>ИИ включён для игроков</span></div>
+    <label style="margin-top:12px">Системный промпт</label>
+    <textarea id="systemPrompt"></textarea>
+    <div class="row" style="margin-top:12px">
+      <button id="saveSettings">Сохранить настройки</button>
+      <button class="sec" id="resetAll">Обнулить счётчики</button>
+      <span class="hint" id="reset"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <h2 style="margin:0">Провайдеры ИИ</h2>
+      <div class="sp"></div>
+      <button class="sec sm" id="addProv">+ Добавить провайдера</button>
+    </div>
+    <div class="hint" style="margin:8px 0 12px">Или выбери пресет → вставь ключ → Сохранить → Проверить.</div>
+    <div class="presets" id="presets"></div>
+    <div id="provs"></div>
+  </div>
+
+  <div class="card">
+    <div class="row"><h2 style="margin:0">Игроки</h2><div class="sp"></div><span class="hint">последние 300</span></div>
+    <div style="overflow:auto"><table>
+      <thead><tr><th>Ник</th><th>ID</th><th>Сегодня</th><th>Лимит</th><th>Всего</th><th></th></tr></thead>
+      <tbody id="users"></tbody>
+    </table></div>
   </div>
 </div>
-
+<div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s);
-let PW=sessionStorage.getItem('pw')||'';
-
+let PW=sessionStorage.getItem('pw')||'', ST=null;
+const PRESETS = [
+  {name:'Groq · Llama 3.3 70B', type:'openai', baseUrl:'https://api.groq.com/openai/v1', model:'llama-3.3-70b-versatile'},
+  {name:'Groq · Llama 3.1 8B', type:'openai', baseUrl:'https://api.groq.com/openai/v1', model:'llama-3.1-8b-instant'},
+  {name:'OpenAI · GPT-4o mini', type:'openai', baseUrl:'https://api.openai.com/v1', model:'gpt-4o-mini'},
+  {name:'OpenAI · GPT-4o', type:'openai', baseUrl:'https://api.openai.com/v1', model:'gpt-4o'},
+  {name:'OpenRouter · auto', type:'openai', baseUrl:'https://openrouter.ai/api/v1', model:'openrouter/auto'},
+  {name:'DeepSeek · Chat', type:'openai', baseUrl:'https://api.deepseek.com', model:'deepseek-chat'},
+  {name:'Gemini 2.0 Flash', type:'gemini', baseUrl:'', model:'gemini-2.0-flash'},
+];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(t, kind){
+  const e=$('#toast');
+  e.textContent=t;
+  e.className='toast show'+(kind==='ok'?' ok':kind==='err'?' err':'');
+  clearTimeout(toast.t);
+  toast.t=setTimeout(()=>e.classList.remove('show'),2800);
+}
 async function api(path, body){
   const r=await fetch('/admin/api/'+path,{
     method: body?'POST':'GET',
@@ -67,56 +135,191 @@ async function api(path, body){
   if(r.status===401){sessionStorage.removeItem('pw');location.reload();throw 0}
   return r.json();
 }
-
 async function load(){
-  const ST=await api('state');
+  ST=await api('state');
   $('#login').style.display='none';
   $('#app').style.display='';
-  $('#meta').textContent='Хранилище: '+(ST.storage==='upstash'?'Redis (ключи не пропадут)':'файл (на Free могут пропасть после сна)');
-  const box=$('#info');
-  box.innerHTML='';
+  $('#meta').textContent='Хранилище: '+ST.storage+(ST.storage==='file'?' (Free: ключи могут пропасть после сна)':'');
+  for(const k of ['defaultLimit','tzOffsetHours','maxInputChars','maxOutputTokens','historyMessages','temperature','systemPrompt'])
+    $('#'+k).value=ST.settings[k];
+  $('#enabled').checked=ST.settings.enabled;
+  const h=Math.floor(ST.resetIn/3600), m=Math.floor(ST.resetIn%3600/60);
+  $('#reset').textContent='Сброс суток через '+h+' ч '+m+' мин';
+  renderPresets(); renderProvs(); renderUsers();
+}
+function renderPresets(){
+  const box=$('#presets');
+  box.innerHTML='<span class="hint" style="margin-right:6px">Пресеты:</span>';
+  PRESETS.forEach(pr=>{
+    const b=document.createElement('button');
+    b.className='sec sm'; b.textContent=pr.name;
+    b.onclick=()=>applyPreset(pr);
+    box.appendChild(b);
+  });
+}
+async function applyPreset(pr){
+  await api('provider',{type:pr.type, name:pr.name, baseUrl:pr.baseUrl, model:pr.model, enabled:true});
+  toast('Пресет «'+pr.name+'» добавлен. Вставь API-ключ.','ok');
+  await load();
+}
+$('#quickSave').onclick=async()=>{
+  const key=$('#quickKey').value.trim();
+  const st=$('#quickSt');
+  if(!key){st.className='status-line err';st.textContent='Вставь ключ';return}
+  st.className='status-line';st.textContent='проверяю…';
+  const r=await api('quick-key',{apiKey:key});
+  if(r.ok){
+    st.className='status-line ok';
+    st.textContent='Готово! '+r.name+' · '+r.model+' · '+r.ms+' мс';
+    $('#quickKey').value='';
+    toast('Ключ работает','ok');
+    await load();
+  } else {
+    st.className='status-line err';
+    st.textContent='Ошибка: '+(r.error||'');
+    toast('Ключ не принят','err');
+  }
+};
+function renderProvs(){
+  const box=$('#provs'); box.innerHTML='';
   if(!ST.providers.length){
-    box.innerHTML='<span class="pill">ключей нет — вставь выше</span>';
+    box.innerHTML='<div class="hint">Провайдеров нет. Вставь ключ сверху или выбери пресет.</div>';
     return;
   }
   for(const p of ST.providers){
-    const act=ST.settings.activeProvider===p.id;
-    box.innerHTML+=`<span class="pill ${p.hasKey?'ok':''}">${p.name} · ${p.model||'?'}${act?' · активный':''}${p.hasKey?' · '+p.keyMask:''}</span>`;
+    const isAct=ST.settings.activeProvider===p.id;
+    const d=document.createElement('div');
+    d.className='prov'+(isAct?' active':'');
+    const typeOpts=Object.keys(ST.types||{openai:1,anthropic:1,gemini:1})
+      .map(t=>`<option value="${t}" ${p.type===t?'selected':''}>${t}</option>`).join('');
+    const modelList=PRESETS.map(x=>`<option value="${esc(x.model)}">${esc(x.name)}</option>`).join('');
+    d.innerHTML=`
+      <div class="row" style="margin-bottom:12px">
+        <span class="dot ${p.enabled?'on':''}"></span>
+        <b style="font-size:15px">${esc(p.name||'Без имени')}</b>
+        ${isAct?'<span class="pill act">активный</span>':''}
+        ${p.enabled?'<span class="pill ok">включён</span>':'<span class="pill bad">выключен</span>'}
+        ${p.hasKey?'<span class="pill ok">ключ '+esc(p.keyMask||'')+'</span>':'<span class="pill bad">нет ключа</span>'}
+        <div class="sp"></div>
+        <button class="sec sm" data-a="active">Сделать активным</button>
+        <button class="sec sm" data-a="test">Проверить</button>
+        <button class="bad sm" data-a="del">Удалить</button>
+      </div>
+      <div class="grid g2">
+        <div><label>Название</label><input data-f="name" value="${esc(p.name)}"></div>
+        <div><label>Тип API</label><select data-f="type">${typeOpts}</select></div>
+        <div>
+          <label>Модель</label>
+          <select data-model-pick><option value="">— своя ниже —</option>${modelList}</select>
+          <input data-f="model" value="${esc(p.model)}" style="margin-top:6px">
+        </div>
+        <div><label>Base URL</label><input data-f="baseUrl" value="${esc(p.baseUrl)}"></div>
+        <div style="grid-column:1/-1">
+          <label>API-ключ ${p.hasKey?'— сохранён: <span class="mask">'+esc(p.keyMask)+'</span>':''}</label>
+          <div class="keybox">
+            <input data-f="apiKey" type="password" autocomplete="off"
+              placeholder="${p.hasKey?'•••• (пусто = не менять)':'вставь API-ключ'}">
+            <button type="button" class="sec sm" data-a="toggleKey">показать</button>
+          </div>
+        </div>
+        <div class="sw"><input data-f="enabled" type="checkbox" style="width:auto" ${p.enabled?'checked':''}><span>Включён</span></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button data-a="save" class="sm">Сохранить</button>
+        <span class="status-line" data-r></span>
+      </div>`;
+    const modelPick=d.querySelector('[data-model-pick]');
+    const modelInp=d.querySelector('[data-f="model"]');
+    modelPick.addEventListener('change',()=>{ if(modelPick.value) modelInp.value=modelPick.value; });
+    const get=()=>{const o={id:p.id}; d.querySelectorAll('[data-f]').forEach(e=>{o[e.dataset.f]=e.type==='checkbox'?e.checked:e.value}); return o};
+    d.addEventListener('click', async e=>{
+      const a=e.target.dataset.a; if(!a) return;
+      const status=d.querySelector('[data-r]');
+      if(a==='toggleKey'){
+        const inp=d.querySelector('[data-f="apiKey"]');
+        inp.type=inp.type==='password'?'text':'password';
+        e.target.textContent=inp.type==='password'?'показать':'скрыть';
+        return;
+      }
+      if(a==='save'){
+        status.className='status-line'; status.textContent='сохраняю…';
+        const body=get();
+        if(!body.apiKey && !p.hasKey){
+          status.className='status-line err'; status.textContent='Вставь API-ключ';
+          toast('Нужен API-ключ','err'); return;
+        }
+        const r=await api('provider', body);
+        if(r.ok){
+          toast('Успешно сохранено','ok');
+          status.className='status-line ok';
+          status.textContent='Успешно сохранено'+(body.apiKey?' (ключ обновлён)':'');
+          await load();
+        } else { status.className='status-line err'; status.textContent='Ошибка'; toast('Ошибка','err'); }
+        return;
+      }
+      if(a==='del'){
+        if(!confirm('Удалить «'+p.name+'»?')) return;
+        await api('provider/delete',{id:p.id}); toast('Удалено','ok'); await load(); return;
+      }
+      if(a==='active'){
+        await api('settings',{activeProvider:p.id}); toast('Активный: '+p.name,'ok'); await load(); return;
+      }
+      if(a==='test'){
+        if(!p.hasKey){ status.className='status-line err'; status.textContent='Сначала сохрани ключ'; toast('Нет ключа','err'); return; }
+        status.className='status-line'; status.textContent='проверяю…';
+        const x=await api('provider/test',{id:p.id});
+        if(x.ok){
+          status.className='status-line ok';
+          status.textContent='Работает · '+x.ms+' мс · «'+(x.text||'').slice(0,80)+'»';
+          toast('Модель работает','ok');
+        } else {
+          status.className='status-line err';
+          status.textContent='Не работает: '+(x.error||'ошибка');
+          toast('Не отвечает: '+(x.error||''),'err');
+        }
+      }
+    });
+    box.appendChild(d);
   }
 }
-
-$('#save').onclick=async()=>{
-  const key=$('#key').value.trim();
-  const st=$('#st');
-  if(!key){st.className='status err';st.textContent='Вставь ключ';return}
-  $('#save').disabled=true;
-  st.className='status';st.style.display='block';st.textContent='Проверяю…';
-  try{
-    const r=await api('quick-key',{apiKey:key});
-    if(r.ok){
-      st.className='status ok';
-      st.textContent='Готово! '+r.name+' · '+r.model+' · '+r.ms+' мс. Можно писать в игре.';
-      $('#key').value='';
-      await load();
-    } else {
-      st.className='status err';
-      st.textContent='Ключ не принят: '+(r.error||'ошибка');
-    }
-  } catch(e){
-    st.className='status err';st.textContent='Ошибка сети';
+$('#addProv').onclick=async()=>{
+  await api('provider',{type:'openai', name:'Новый провайдер', enabled:true});
+  toast('Добавлен','ok'); await load();
+};
+$('#saveSettings').onclick=async()=>{
+  const b={enabled:$('#enabled').checked, systemPrompt:$('#systemPrompt').value};
+  for(const k of ['defaultLimit','tzOffsetHours','maxInputChars','maxOutputTokens','historyMessages','temperature']) b[k]=$('#'+k).value;
+  await api('settings',b); toast('Настройки сохранены','ok'); await load();
+};
+$('#resetAll').onclick=async()=>{
+  if(!confirm('Обнулить счётчики?')) return;
+  await api('reset-all',{}); toast('Готово','ok'); await load();
+};
+function renderUsers(){
+  const tb=$('#users'); tb.innerHTML='';
+  for(const u of ST.users){
+    const lim=u.effectiveLimit, pct=lim<0?100:Math.min(100,u.used/Math.max(1,lim)*100);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${esc(u.nick)||'—'} ${u.banned?'<span class="pill bad">бан</span>':''}</td>
+      <td class="hint">${esc(String(u.id).slice(0,12))}…</td>
+      <td><div class="row"><div class="bar" style="flex:1"><i style="width:${pct}%"></i></div><span>${u.used}/${lim<0?'∞':lim}</span></div></td>
+      <td><input style="width:84px;padding:5px 8px" data-l value="${u.limit===null||u.limit===undefined?'':u.limit}"></td>
+      <td>${u.total}</td>
+      <td class="row"><button class="sec sm" data-a="lim">OK</button><button class="sec sm" data-a="ban">${u.banned?'Разбан':'Бан'}</button><button class="bad sm" data-a="rm">×</button></td>`;
+    tr.addEventListener('click', async e=>{
+      const a=e.target.dataset.a; if(!a) return;
+      if(a==='lim') await api('user',{id:u.id, limit:tr.querySelector('[data-l]').value});
+      if(a==='ban') await api('user',{id:u.id, banned:!u.banned});
+      if(a==='rm' && confirm('Удалить?')) await api('user',{id:u.id, remove:true});
+      toast('Готово','ok'); await load();
+    });
+    tb.appendChild(tr);
   }
-  $('#save').disabled=false;
-};
-
-$('#show').onclick=()=>{
-  const i=$('#key');
-  i.type=i.type==='password'?'text':'password';
-};
-
-$('#enter').onclick=()=>{PW=$('#pw').value;sessionStorage.setItem('pw',PW);load().catch(()=>alert('Неверный пароль'))};
-$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#enter').click()};
-$('#logout').onclick=()=>{sessionStorage.removeItem('pw');location.reload()};
-if(PW)load().catch(()=>{});
+}
+$('#enter').onclick=()=>{PW=$('#pw').value; sessionStorage.setItem('pw',PW); load().catch(()=>toast('Неверный пароль','err'))};
+$('#pw').addEventListener('keydown',e=>{if(e.key==='Enter') $('#enter').click()});
+$('#logout').onclick=()=>{sessionStorage.removeItem('pw'); location.reload()};
+if(PW) load().catch(()=>{});
 </script>
 </body>
 </html>
